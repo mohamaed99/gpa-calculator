@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حساب المعدل الجامعي</title>
+    <style>
+        /* أنماط عامة */
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        /* ترويسة الصفحة */
+        .header {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 24px;
+        }
+
+        /* ملاحظات حول كيفية الحساب */
+        .note {
+            background-color: #e9ecef;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        /* قائمة السنوات */
+        .years {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px;
+        }
+
+        .year {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* قائمة السداسيات */
+        .semesters {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px;
+        }
+
+        .semester {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* الجدول */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        /* الأزرار */
+        .buttons {
+            text-align: center;
+            margin: 20px;
+        }
+
+        .buttons button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .buttons button:first-child {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .buttons button:last-child {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* نتيجة الحساب */
+        .result {
+            font-size: 20px;
+            font-weight: bold;
+            color: #007bff;
+            margin-top: 10px;
+        }
+
+        /* تذييل الصفحة */
+        .footer {
+            text-align: center;
+            margin: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    جامعة غرداية كلية الحقوق والعلوم السياسية قسم الحقوق 
+</div>
+
+<div class="note">
+    <strong>كيفية حساب المعدل:</strong><br>
+    - إذا كان للمقياس نقطة أعمال موجهة: (نقطة الأعمال الموجهة + نقطة الامتحان) ÷ 2 × معامل المقياس.<br>
+    - إذا لم يكن للمقياس نقطة أعمال موجهة: نقطة الامتحان × معامل المقياس.<br>
+    - المعدل العام = مجموع معدلات المقاييس ÷ مجموع المعاملات.
+</div>
+
+<div class="years">
+    <div class="year" onclick="showSemesters('year1')">السنة الأولى</div>
+    <div class="year" onclick="showSemesters('year2')">السنة الثانية</div>
+</div>
+
+<div id="semesters" class="semesters" style="display: none;"></div>
+
+<div id="tableContainer"></div>
+
+<div class="buttons" style="display: none;">
+    <button onclick="calculateAverage()">حساب المعدل</button>
+    <button onclick="resetPoints()">إعادة تعيين النقاط</button>
+    <div id="result" class="result"></div>
+</div>
+
+<div class="footer">
+    by: Mohamed alamine ch
+</div>
+
+<script>
+    const data = {
+        year1: {
+            semester1: [
+                { name: "مدخل للقانون", coefficient: 2, hasWork: true },
+                { name: "قانون دستوري", coefficient: 2, hasWork: true },
+                { name: "التنظيم القضائي", coefficient: 1, hasWork: true },
+                { name: "منهجية العلوم القانونية", coefficient: 1, hasWork: false },
+                { name: "تاريخ النظم", coefficient: 1, hasWork: false },
+                { name: "مجتمع دولي", coefficient: 1, hasWork: false },
+                { name: "لغة أجنبية", coefficient: 1, hasWork: false }
+            ],
+            semester2: [
+                { name: "مدخل للقانون", coefficient: 2, hasWork: true },
+                { name: "قانون دستوري", coefficient: 2, hasWork: true },
+                { name: "التنظيم القضائي", coefficient: 1, hasWork: true },
+                { name: "منهجية العلوم القانونية", coefficient: 1, hasWork: false },
+                { name: "الشريعة الإسلامية", coefficient: 1, hasWork: false },
+                { name: "اقتصاد سياسي", coefficient: 1, hasWork: false },
+                { name: "لغة أجنبية", coefficient: 1, hasWork: false }
+            ]
+        },
+        year2: {
+            semester3: [
+                { name: "القانون المدني", coefficient: 2, hasWork: true },
+                { name: "النظرية العامة للجريمة والعقوبة", coefficient: 2, hasWork: true },
+                { name: "منهجية العلوم القانونية", coefficient: 1, hasWork: true },
+                { name: "القانون التجاري", coefficient: 1, hasWork: true },
+                { name: "القانون الدولي العام", coefficient: 2, hasWork: false },
+                { name: "قانون الأسرة", coefficient: 1, hasWork: false },
+                { name: "لغة أجنبية", coefficient: 1, hasWork: false }
+            ],
+            semester4: [
+                { name: "القانون المدني", coefficient: 2, hasWork: true },
+                { name: "قانون الإجراءات الجزائية", coefficient: 2, hasWork: true },
+                { name: "منهجية العلوم القانونية", coefficient: 1, hasWork: true },
+                { name: "قانون الإجراءات المدنية", coefficient: 1, hasWork: true },
+                { name: "حقوق الإنسان", coefficient: 1, hasWork: false },
+                { name: "قانون العمل", coefficient: 1, hasWork: false },
+                { name: "لغة أجنبية", coefficient: 1, hasWork: false }
+            ]
+        }
+    };
+
+    function showSemesters(year) {
+        const semestersContainer = document.getElementById('semesters');
+        if (!semestersContainer) return; // تحقق من وجود العنصر
+
+        semestersContainer.innerHTML = '';
+        semestersContainer.style.display = 'flex';
+
+        const semesters = data[year];
+        for (const semester in semesters) {
+            const semesterDiv = document.createElement('div');
+            semesterDiv.className = 'semester';
+            semesterDiv.textContent = semester === 'semester1' ? 'السداسي الأول' :
+                                     semester === 'semester2' ? 'السداسي الثاني' :
+                                     semester === 'semester3' ? 'السداسي الثالث' :
+                                     semester === 'semester4' ? 'السداسي الرابع' :
+                                     semester === 'semester5' ? 'السداسي الخامس' :
+                                     'السداسي السادس';
+            semesterDiv.onclick = () => showTable(year, semester);
+            semestersContainer.appendChild(semesterDiv);
+        }
+    }
+
+    function showTable(year, semester) {
+        const tableContainer = document.getElementById('tableContainer');
+        if (!tableContainer) return; // تحقق من وجود العنصر
+
+        tableContainer.innerHTML = '';
+
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        const headerRow = document.createElement('tr');
+        const headers = ["اسم المقياس", "المعامل", "علامة الأعمال الموجهة", "علامة الامتحان", "معدل المقياس"];
+        headers.forEach(headerText => {
+            const th = document.createElement('th');
+            th.textContent = headerText;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        data[year][semester].forEach(subject => {
+            const row = document.createElement('tr');
+            const nameCell = document.createElement('td');
+            nameCell.textContent = subject.name;
+            row.appendChild(nameCell);
+
+            const coefficientCell = document.createElement('td');
+            coefficientCell.textContent = subject.coefficient;
+            row.appendChild(coefficientCell);
+
+            const workCell = document.createElement('td');
+            const workInput = document.createElement('input');
+            workInput.type = 'number';
+            workInput.min = 0;
+            workInput.max = 20;
+            workInput.disabled = !subject.hasWork;
+            workCell.appendChild(workInput);
+            row.appendChild(workCell);
+
+            const examCell = document.createElement('td');
+            const examInput = document.createElement('input');
+            examInput.type = 'number';
+            examInput.min = 0;
+            examInput.max = 20;
+            examCell.appendChild(examInput);
+            row.appendChild(examCell);
+
+            const averageCell = document.createElement('td');
+            const averageInput = document.createElement('input');
+            averageInput.type = 'number';
+            averageInput.min = 0;
+            averageInput.max = 20;
+            averageInput.disabled = true;
+            averageCell.appendChild(averageInput);
+            row.appendChild(averageCell);
+
+            examInput.addEventListener('input', () => {
+                if (subject.hasWork) {
+                    const workValue = parseFloat(workInput.value) || 0;
+                    const examValue = parseFloat(examInput.value) || 0;
+                    averageInput.value = ((workValue + examValue) / 2 * subject.coefficient).toFixed(2);
+                } else {
+                    averageInput.value = (examInput.value * subject.coefficient).toFixed(2);
+                }
+            });
+
+            workInput.addEventListener('input', () => {
+                if (subject.hasWork) {
+                    const workValue = parseFloat(workInput.value) || 0;
+                    const examValue = parseFloat(examInput.value) || 0;
+                    averageInput.value = ((workValue + examValue) / 2 * subject.coefficient).toFixed(2);
+                }
+            });
+
+            tbody.appendChild(row);
+        });
+
+        // إضافة صف المجاميع
+        const totalRow = document.createElement('tr');
+        totalRow.innerHTML = `
+            <td colspan="2"><strong>المجموع</strong></td>
+            <td id="totalCoefficient"></td>
+            <td colspan="2" id="totalAverage"></td>
+        `;
+        tbody.appendChild(totalRow);
+
+        table.appendChild(tbody);
+        tableContainer.appendChild(table);
+
+        const buttons = document.querySelector('.buttons');
+        if (buttons) buttons.style.display = 'block';
+    }
+
+    function calculateAverage() {
+        const table = document.querySelector('table');
+        if (!table) return; // تحقق من وجود العنصر
+
+        const rows = table.querySelectorAll('tbody tr');
+        let totalCoefficient = 0;
+        let totalAverage = 0;
+
+        rows.forEach(row => {
+            const coefficient = parseFloat(row.querySelector('td:nth-child(2)').textContent) || 0;
+            const averageInput = row.querySelector('td:nth-child(5) input');
+            if (!averageInput) return; // تحقق من وجود العنصر
+
+            const average = parseFloat(averageInput.value) || 0;
+            totalCoefficient += coefficient;
+            totalAverage += average;
+        });
+
+        const average = totalAverage / totalCoefficient;
+        const resultDiv = document.getElementById('result');
+        if (resultDiv) resultDiv.innerHTML = `المعدل العام للسداسي: <strong>${average.toFixed(2)}</strong>`;
+
+        // عرض المجاميع
+        const totalCoefficientDiv = document.getElementById('totalCoefficient');
+        const totalAverageDiv = document.getElementById('totalAverage');
+        if (totalCoefficientDiv) totalCoefficientDiv.textContent = totalCoefficient;
+        if (totalAverageDiv) totalAverageDiv.textContent = totalAverage.toFixed(2);
+    }
+
+    function resetPoints() {
+        const inputs = document.querySelectorAll('input[type="number"]');
+        inputs.forEach(input => {
+            input.value = '';
+        });
+        const resultDiv = document.getElementById('result');
+        if (resultDiv) resultDiv.innerHTML = '';
+        const totalCoefficientDiv = document.getElementById('totalCoefficient');
+        const totalAverageDiv = document.getElementById('totalAverage');
+        if (totalCoefficientDiv) totalCoefficientDiv.textContent = '';
+        if (totalAverageDiv) totalAverageDiv.textContent = '';
+    }
+</script>
+
+</body>
+</html>
